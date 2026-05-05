@@ -1,0 +1,146 @@
+import Link from "next/link";
+import { auth } from "@/lib/auth";
+import Header from "@/components/layout/Header";
+import { Zap, Calendar, CreditCard, Palette, Star, ArrowRight, Sparkles } from "lucide-react";
+
+export default async function HomePage() {
+  const session = await auth();
+  const user = session?.user as typeof session.user & { role?: string; id?: string } | null;
+
+  return (
+    <div className="min-h-screen flex flex-col">
+      <Header user={user} />
+
+      {/* Hero */}
+      <section className="relative overflow-hidden px-4 py-24 sm:py-36">
+        <div className="absolute inset-0 bg-gradient-to-br from-ink-950/40 via-obsidian-950 to-obsidian-950" />
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-ink-600/10 blur-3xl rounded-full" />
+
+        <div className="relative mx-auto max-w-4xl text-center space-y-8">
+          <div className="inline-flex items-center gap-2 rounded-full border border-ink-700/50 bg-ink-900/20 px-4 py-1.5 text-sm text-ink-400">
+            <Sparkles className="h-3.5 w-3.5" />
+            The modern way to book tattoo appointments
+          </div>
+
+          <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white leading-[1.05]">
+            Find your next
+            <span className="block text-gradient">tattoo artist</span>
+          </h1>
+
+          <p className="max-w-2xl mx-auto text-lg sm:text-xl text-obsidian-400 leading-relaxed">
+            Browse flash designs, submit custom concepts, and book directly with artists.
+            Deposits held securely through Stripe. No back-and-forth DMs required.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <Link href="/artists" className="btn-primary text-base px-8 py-3 gap-2">
+              Browse artists
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link href="/register?role=artist" className="btn-secondary text-base px-8 py-3">
+              I&apos;m an artist
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* Features */}
+      <section className="px-4 py-20 border-t border-obsidian-900">
+        <div className="mx-auto max-w-6xl">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">Everything you need</h2>
+            <p className="mt-3 text-obsidian-400 text-lg">Built for artists, loved by clients</p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <FeatureCard
+              icon={<Palette className="h-6 w-6" />}
+              title="Flash & Custom Bookings"
+              description="Clients can browse your flash designs with images, or submit custom requests with reference photos. You control what types of bookings you accept."
+            />
+            <FeatureCard
+              icon={<Calendar className="h-6 w-6" />}
+              title="Calendar Integration"
+              description="Connect your Google Calendar and clients see your real availability. Confirmed bookings automatically appear in your calendar."
+            />
+            <FeatureCard
+              icon={<CreditCard className="h-6 w-6" />}
+              title="Stripe Deposit Collection"
+              description="Automatically collect a deposit when clients book. Set a fixed amount or percentage. Deposits are released to you after the appointment."
+            />
+            <FeatureCard
+              icon={<Zap className="h-6 w-6" />}
+              title="Custom Booking Forms"
+              description="Customize every aspect of your booking form — sizes, body placements, flash designs, and additional questions. Make it yours."
+            />
+            <FeatureCard
+              icon={<Star className="h-6 w-6" />}
+              title="Portfolio Showcase"
+              description="Your public profile is your gallery. Upload portfolio images, add your bio, link your Instagram, and let your work speak for itself."
+            />
+            <FeatureCard
+              icon={<Sparkles className="h-6 w-6" />}
+              title="Streamlined Workflow"
+              description="Manage all your bookings in one place. Confirm, cancel, or reschedule from your dashboard. No more lost DMs."
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* CTA for artists */}
+      <section className="px-4 py-20 border-t border-obsidian-900">
+        <div className="mx-auto max-w-3xl text-center space-y-6">
+          <h2 className="text-3xl sm:text-4xl font-bold text-white">
+            Ready to streamline your bookings?
+          </h2>
+          <p className="text-obsidian-400 text-lg">
+            Create your artist profile in minutes. Set up your flash gallery, customize your booking
+            form, and start accepting appointments today.
+          </p>
+          <Link href="/register" className="btn-primary text-base px-10 py-3 inline-flex">
+            Create your artist profile — it&apos;s free
+          </Link>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="mt-auto border-t border-obsidian-900 px-4 py-8">
+        <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink-600">
+              <Zap className="h-3.5 w-3.5 text-white" />
+            </div>
+            <span className="font-semibold text-white">TatBook</span>
+          </div>
+          <p className="text-sm text-obsidian-500">
+            © {new Date().getFullYear()} TatBook. All rights reserved.
+          </p>
+          <div className="flex items-center gap-4 text-sm text-obsidian-500">
+            <Link href="/privacy" className="hover:text-obsidian-300">Privacy</Link>
+            <Link href="/terms" className="hover:text-obsidian-300">Terms</Link>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
+
+function FeatureCard({
+  icon,
+  title,
+  description,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+}) {
+  return (
+    <div className="card p-6 space-y-4">
+      <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink-900/50 text-ink-400 ring-1 ring-ink-700/30">
+        {icon}
+      </div>
+      <h3 className="text-lg font-semibold text-white">{title}</h3>
+      <p className="text-sm text-obsidian-400 leading-relaxed">{description}</p>
+    </div>
+  );
+}
