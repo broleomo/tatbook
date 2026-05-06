@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
+  Skull,
   Zap,
   Settings,
   BookOpen,
@@ -35,7 +36,7 @@ export default function DashboardSidebar({ artistId, displayName }: SidebarProps
       <div className="p-6 border-b border-obsidian-800">
         <Link href="/" className="flex items-center gap-2">
           <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-600">
-            <Zap className="h-4 w-4 text-white" />
+            <Skull className="h-4 w-4 text-white" />
           </div>
           <span className="font-display text-white">TatBook</span>
         </Link>

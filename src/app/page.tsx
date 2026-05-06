@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { auth } from "@/lib/auth";
 import Header from "@/components/layout/Header";
-import { Zap, Calendar, CreditCard, Palette, Star, ArrowRight, Sparkles } from "lucide-react";
+import { Skull, Calendar, CreditCard, Palette, Star, ArrowRight, Sparkles } from "lucide-react";
 
 export default async function HomePage() {
   const session = await auth();
@@ -12,22 +12,32 @@ export default async function HomePage() {
       <Header user={user} />
 
       {/* Hero */}
-      <section className="relative overflow-hidden px-4 py-24 sm:py-36">
-        <div className="absolute inset-0 bg-gradient-to-br from-ink-950/40 via-obsidian-950 to-obsidian-950" />
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-ink-600/10 blur-3xl rounded-full" />
+      <section className="relative overflow-hidden px-4 py-24 sm:py-40">
+        {/* Background image */}
+        <div
+          className="absolute inset-0 bg-center bg-cover bg-no-repeat"
+          style={{ backgroundImage: "url('/hero-bg.jpg')" }}
+        />
+
+        {/* Layered gradient overlay: dark vignette + bottom fade into site bg */}
+        <div className="absolute inset-0 bg-gradient-to-b from-obsidian-950/80 via-obsidian-950/60 to-obsidian-950" />
+        {/* Left/right fade so text sits on a clean dark center */}
+        <div className="absolute inset-0 bg-gradient-to-r from-obsidian-950/70 via-transparent to-obsidian-950/70" />
+        {/* Subtle red glow behind heading */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-ink-700/20 blur-3xl rounded-full pointer-events-none" />
 
         <div className="relative mx-auto max-w-4xl text-center space-y-8">
-          <div className="inline-flex items-center gap-2 rounded-full border border-ink-700/50 bg-ink-900/20 px-4 py-1.5 text-sm text-ink-400">
+          <div className="inline-flex items-center gap-2 rounded-full border border-ink-700/50 bg-obsidian-950/60 backdrop-blur-sm px-4 py-1.5 text-sm text-ink-400">
             <Sparkles className="h-3.5 w-3.5" />
             The modern way to book tattoo appointments
           </div>
 
-          <h1 className="text-5xl sm:text-7xl font-bold tracking-tight text-white leading-[1.05]">
+          <h1 className="text-5xl sm:text-7xl tracking-tight text-white leading-[1.1] drop-shadow-2xl">
             Find your next
             <span className="block text-gradient">tattoo artist</span>
           </h1>
 
-          <p className="max-w-2xl mx-auto text-lg sm:text-xl text-obsidian-400 leading-relaxed">
+          <p className="max-w-2xl mx-auto text-lg sm:text-xl text-obsidian-300 leading-relaxed drop-shadow-lg">
             Browse flash designs, submit custom concepts, and book directly with artists.
             Deposits held securely through Stripe. No back-and-forth DMs required.
           </p>
@@ -37,7 +47,7 @@ export default async function HomePage() {
               Browse artists
               <ArrowRight className="h-4 w-4" />
             </Link>
-            <Link href="/register?role=artist" className="btn-secondary text-base px-8 py-3">
+            <Link href="/register?role=artist" className="btn-secondary text-base px-8 py-3 bg-obsidian-950/70 backdrop-blur-sm">
               I&apos;m an artist
             </Link>
           </div>
@@ -48,8 +58,8 @@ export default async function HomePage() {
       <section className="px-4 py-20 border-t border-obsidian-900">
         <div className="mx-auto max-w-6xl">
           <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-white">Everything you need</h2>
-            <p className="mt-3 text-obsidian-400 text-lg">Built for artists, loved by clients</p>
+            <h2 className="text-3xl sm:text-4xl text-white">Everything you need</h2>
+            <p className="mt-3 text-obsidian-400 text-lg font-sans">Built for artists, loved by clients</p>
           </div>
 
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -69,7 +79,7 @@ export default async function HomePage() {
               description="Automatically collect a deposit when clients book. Set a fixed amount or percentage. Deposits are released to you after the appointment."
             />
             <FeatureCard
-              icon={<Zap className="h-6 w-6" />}
+              icon={<Skull className="h-6 w-6" />}
               title="Custom Booking Forms"
               description="Customize every aspect of your booking form — sizes, body placements, flash designs, and additional questions. Make it yours."
             />
@@ -90,10 +100,10 @@ export default async function HomePage() {
       {/* CTA for artists */}
       <section className="px-4 py-20 border-t border-obsidian-900">
         <div className="mx-auto max-w-3xl text-center space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">
+          <h2 className="text-3xl sm:text-4xl text-white">
             Ready to streamline your bookings?
           </h2>
-          <p className="text-obsidian-400 text-lg">
+          <p className="text-obsidian-400 text-lg font-sans">
             Create your artist profile in minutes. Set up your flash gallery, customize your booking
             form, and start accepting appointments today.
           </p>
@@ -108,7 +118,7 @@ export default async function HomePage() {
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink-600">
-              <Zap className="h-3.5 w-3.5 text-white" />
+              <Skull className="h-3.5 w-3.5 text-white" />
             </div>
             <span className="font-display text-white">TatBook</span>
           </div>
@@ -139,8 +149,8 @@ function FeatureCard({
       <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-ink-900/50 text-ink-400 ring-1 ring-ink-700/30">
         {icon}
       </div>
-      <h3 className="text-lg font-semibold text-white">{title}</h3>
-      <p className="text-sm text-obsidian-400 leading-relaxed">{description}</p>
+      <h3 className="text-lg text-white">{title}</h3>
+      <p className="text-sm font-sans text-obsidian-400 leading-relaxed">{description}</p>
     </div>
   );
 }

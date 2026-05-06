@@ -7,7 +7,7 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Zap, Eye, EyeOff, Chrome } from "lucide-react";
+import { Skull, Eye, EyeOff, Chrome } from "lucide-react";
 
 const loginSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -51,7 +51,7 @@ export default function LoginPage() {
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2 mb-8">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-600">
-              <Zap className="h-5 w-5 text-white" />
+              <Skull className="h-5 w-5 text-white" />
             </div>
             <span className="text-2xl font-display text-white">TatBook</span>
           </Link>
