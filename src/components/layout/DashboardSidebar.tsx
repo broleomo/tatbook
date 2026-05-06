@@ -35,9 +35,7 @@ export default function DashboardSidebar({ artistId, displayName }: SidebarProps
     <aside className="hidden lg:flex w-64 flex-col border-r border-obsidian-800 bg-obsidian-950 min-h-screen">
       <div className="p-6 border-b border-obsidian-800">
         <Link href="/" className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-600">
-            <Skull className="h-4 w-4 text-white" />
-          </div>
+          <Skull className="h-7 w-7 text-white" />
           <span className="font-display text-white">TatBook</span>
         </Link>
       </div>

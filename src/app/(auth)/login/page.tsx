@@ -50,9 +50,7 @@ export default function LoginPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2 mb-8">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-600">
-              <Skull className="h-5 w-5 text-white" />
-            </div>
+            <Skull className="h-10 w-10 text-white" />
             <span className="text-2xl font-display text-white">TatBook</span>
           </Link>
           <h1 className="text-3xl font-bold text-white">Welcome back</h1>

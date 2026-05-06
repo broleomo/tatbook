@@ -260,7 +260,11 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
                   </div>
                 ) : (
                   /* Dropzone when no image selected */
-                  <label
+                  <div
+                    role="button"
+                    tabIndex={0}
+                    onClick={() => fileInputRef.current?.click()}
+                    onKeyDown={(e) => e.key === "Enter" && fileInputRef.current?.click()}
                     className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-obsidian-700 p-8 cursor-pointer transition-all hover:border-ink-600 hover:bg-ink-900/10 group"
                     onDragOver={(e) => e.preventDefault()}
                     onDrop={(e) => {
@@ -279,7 +283,7 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
                         PNG, JPG, WEBP up to {MAX_FILE_SIZE_MB}MB
                       </p>
                     </div>
-                  </label>
+                  </div>
                 )}
 
                 {/* Hidden file input shared by both the dropzone and replace button */}

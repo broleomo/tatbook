@@ -27,9 +27,7 @@ export default function Header({ user }: HeaderProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-600 transition-all group-hover:bg-ink-500">
-              <Skull className="h-4 w-4 text-white" />
-            </div>
+            <Skull className="h-7 w-7 text-white transition-transform group-hover:scale-110" />
             <span className="text-xl font-display text-white">TatBook</span>
           </Link>
 

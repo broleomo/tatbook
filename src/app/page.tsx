@@ -117,9 +117,7 @@ export default async function HomePage() {
       <footer className="mt-auto border-t border-obsidian-900 px-4 py-8">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink-600">
-              <Skull className="h-3.5 w-3.5 text-white" />
-            </div>
+            <Skull className="h-7 w-7 text-white" />
             <span className="font-display text-white">TatBook</span>
           </div>
           <p className="text-sm text-obsidian-500">
