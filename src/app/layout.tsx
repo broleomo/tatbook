@@ -1,5 +1,13 @@
 import type { Metadata } from "next";
+import { Boldonse } from "next/font/google";
 import "./globals.css";
+
+const boldonse = Boldonse({
+  weight: "400",
+  subsets: ["latin"],
+  variable: "--font-boldonse",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -17,7 +25,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" className={`dark ${boldonse.variable}`}>
       <body className="min-h-screen bg-obsidian-950 text-obsidian-50">
         {children}
       </body>

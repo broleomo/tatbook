@@ -53,7 +53,7 @@ export default function LoginPage() {
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-ink-600">
               <Zap className="h-5 w-5 text-white" />
             </div>
-            <span className="text-2xl font-bold text-white">TatBook</span>
+            <span className="text-2xl font-display text-white">TatBook</span>
           </Link>
           <h1 className="text-3xl font-bold text-white">Welcome back</h1>
           <p className="mt-2 text-obsidian-400">Sign in to your account</p>

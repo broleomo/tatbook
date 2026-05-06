@@ -30,7 +30,7 @@ export default function Header({ user }: HeaderProps) {
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-ink-600 transition-all group-hover:bg-ink-500">
               <Zap className="h-4 w-4 text-white" />
             </div>
-            <span className="text-xl font-bold text-white">TatBook</span>
+            <span className="text-xl font-display text-white">TatBook</span>
           </Link>
 
           <nav className="hidden md:flex items-center gap-1">

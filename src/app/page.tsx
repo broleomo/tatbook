@@ -110,7 +110,7 @@ export default async function HomePage() {
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-ink-600">
               <Zap className="h-3.5 w-3.5 text-white" />
             </div>
-            <span className="font-semibold text-white">TatBook</span>
+            <span className="font-display text-white">TatBook</span>
           </div>
           <p className="text-sm text-obsidian-500">
             © {new Date().getFullYear()} TatBook. All rights reserved.
