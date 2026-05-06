@@ -7,7 +7,8 @@ import { signIn } from "next-auth/react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Skull, Eye, EyeOff, User, Palette } from "lucide-react";
+import { Eye, EyeOff, User, Palette } from "lucide-react";
+import BatSkull from "@/components/ui/BatSkull";
 import { cn } from "@/lib/utils";
 
 const registerSchema = z
@@ -77,7 +78,7 @@ export default function RegisterPage() {
       <div className="w-full max-w-md space-y-8">
         <div className="text-center">
           <Link href="/" className="inline-flex items-center gap-2 mb-8">
-            <Skull className="h-10 w-10 text-white" />
+            <BatSkull size={40} />
             <span className="text-2xl font-display text-white">TatBook</span>
           </Link>
           <h1 className="text-3xl font-bold text-white">Create your account</h1>

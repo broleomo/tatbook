@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Menu, X, Skull } from "lucide-react";
+import { Menu, X } from "lucide-react";
+import BatSkull from "@/components/ui/BatSkull";
 import { cn } from "@/lib/utils";
 
 interface HeaderProps {
@@ -27,7 +28,9 @@ export default function Header({ user }: HeaderProps) {
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between">
           <Link href="/" className="flex items-center gap-2 group">
-            <Skull className="h-7 w-7 text-white transition-transform group-hover:scale-110" />
+            <span className="transition-transform group-hover:scale-110 inline-flex">
+              <BatSkull size={36} />
+            </span>
             <span className="text-xl font-display text-white">TatBook</span>
           </Link>
 

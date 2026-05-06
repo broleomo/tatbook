@@ -5,7 +5,6 @@ import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   CalendarDays,
-  Skull,
   Zap,
   Settings,
   BookOpen,
@@ -14,6 +13,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
+import BatSkull from "@/components/ui/BatSkull";
 
 interface SidebarProps {
   artistId: string;
@@ -35,7 +35,7 @@ export default function DashboardSidebar({ artistId, displayName }: SidebarProps
     <aside className="hidden lg:flex w-64 flex-col border-r border-obsidian-800 bg-obsidian-950 min-h-screen">
       <div className="p-6 border-b border-obsidian-800">
         <Link href="/" className="flex items-center gap-2">
-          <Skull className="h-7 w-7 text-white" />
+          <BatSkull size={36} />
           <span className="font-display text-white">TatBook</span>
         </Link>
       </div>

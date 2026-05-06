@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { auth } from "@/lib/auth";
 import Header from "@/components/layout/Header";
+import BatSkull from "@/components/ui/BatSkull";
 import { Skull, Calendar, CreditCard, Palette, Star, ArrowRight, Sparkles } from "lucide-react";
 
 export default async function HomePage() {
@@ -123,7 +124,7 @@ export default async function HomePage() {
       <footer className="mt-auto border-t border-obsidian-900 px-4 py-8">
         <div className="mx-auto max-w-7xl flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <Skull className="h-7 w-7 text-white" />
+            <BatSkull size={28} />
             <span className="font-display text-white">TatBook</span>
           </div>
           <p className="text-sm text-obsidian-500">
