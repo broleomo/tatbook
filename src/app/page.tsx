@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { auth } from "@/lib/auth";
 import Header from "@/components/layout/Header";
 import { Skull, Calendar, CreditCard, Palette, Star, ArrowRight, Sparkles } from "lucide-react";
@@ -13,18 +14,23 @@ export default async function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden px-4 py-24 sm:py-40">
-        {/* Background image */}
-        <div
-          className="absolute inset-0 bg-center bg-cover bg-no-repeat"
-          style={{ backgroundImage: "url('/hero-bg.jpg')" }}
+        {/* Background image — fill the section, sit behind everything */}
+        <Image
+          src="/hero-bg.jpg"
+          alt=""
+          fill
+          priority
+          className="object-cover object-center"
         />
 
-        {/* Layered gradient overlay: dark vignette + bottom fade into site bg */}
-        <div className="absolute inset-0 bg-gradient-to-b from-obsidian-950/80 via-obsidian-950/60 to-obsidian-950" />
-        {/* Left/right fade so text sits on a clean dark center */}
-        <div className="absolute inset-0 bg-gradient-to-r from-obsidian-950/70 via-transparent to-obsidian-950/70" />
+        {/* Bottom fade: blend image into the site background colour */}
+        <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-obsidian-950 to-transparent" />
+        {/* Top fade: darken the very top edge slightly */}
+        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-obsidian-950/60 to-transparent" />
+        {/* Overall dark tint so text remains legible over the busy image */}
+        <div className="absolute inset-0 bg-obsidian-950/50" />
         {/* Subtle red glow behind heading */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-ink-700/20 blur-3xl rounded-full pointer-events-none" />
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] bg-ink-600/20 blur-3xl rounded-full pointer-events-none" />
 
         <div className="relative mx-auto max-w-4xl text-center space-y-8">
           <div className="inline-flex items-center gap-2 rounded-full border border-ink-700/50 bg-obsidian-950/60 backdrop-blur-sm px-4 py-1.5 text-sm text-ink-400">
