@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Pencil, Trash2, Eye, EyeOff, GripVertical, Upload, X } from "lucide-react";
+import { useRef, useState } from "react";
+import { Plus, Pencil, Trash2, Eye, EyeOff, Upload, X, ImagePlus } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
 interface FlashDesign {
@@ -35,18 +35,31 @@ const EMPTY_FORM: DesignForm = {
   basePrice: "",
 };
 
+const MAX_FILE_SIZE_MB = 10;
+
 export default function FlashDesignManager({ designs: initial, artistId }: Props) {
   const [designs, setDesigns] = useState(initial);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState<DesignForm>(EMPTY_FORM);
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>("");
+  const [uploading, setUploading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const resetImageState = () => {
+    setImageFile(null);
+    setImagePreview("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
 
   const openCreate = () => {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    resetImageState();
     setError("");
     setShowForm(true);
   };
@@ -60,21 +73,58 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
       available: design.available,
       basePrice: design.basePrice?.toString() ?? "",
     });
+    resetImageState();
     setError("");
     setShowForm(true);
   };
 
+  const handleFileChange = (file: File | null) => {
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      setError("Please select an image file.");
+      return;
+    }
+    if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+      setError(`Image must be under ${MAX_FILE_SIZE_MB}MB.`);
+      return;
+    }
+    setError("");
+    setImageFile(file);
+    setImagePreview(URL.createObjectURL(file));
+  };
+
   const saveDesign = async () => {
     if (!form.name.trim()) { setError("Design name is required."); return; }
-    if (!form.imageUrl.trim()) { setError("Image URL is required."); return; }
+
+    // Must have either an existing URL (editing) or a new file (creating/replacing)
+    const hasExistingImage = !!form.imageUrl;
+    const hasNewImage = !!imageFile;
+    if (!hasExistingImage && !hasNewImage) {
+      setError("Please upload an image for this design.");
+      return;
+    }
 
     setSaving(true);
     setError("");
     try {
+      let finalImageUrl = form.imageUrl;
+
+      // Upload new file if one was selected
+      if (hasNewImage && imageFile) {
+        setUploading(true);
+        const fd = new FormData();
+        fd.append("files", imageFile);
+        const upRes = await fetch("/api/upload", { method: "POST", body: fd });
+        setUploading(false);
+        if (!upRes.ok) throw new Error("Image upload failed");
+        const { urls } = await upRes.json();
+        finalImageUrl = urls[0];
+      }
+
       const payload = {
         name: form.name.trim(),
         description: form.description.trim() || null,
-        imageUrl: form.imageUrl.trim(),
+        imageUrl: finalImageUrl,
         available: form.available,
         basePrice: form.basePrice ? parseFloat(form.basePrice) : null,
       };
@@ -103,6 +153,7 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
       setError("Something went wrong. Please try again.");
     } finally {
       setSaving(false);
+      setUploading(false);
     }
   };
 
@@ -177,27 +228,68 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
               </div>
 
               <div>
-                <label className="label">Image URL *</label>
-                <input
-                  type="url"
-                  className="input-field"
-                  placeholder="https://…"
-                  value={form.imageUrl}
-                  onChange={(e) => setForm({ ...form, imageUrl: e.target.value })}
-                />
-                {form.imageUrl && (
-                  <div className="mt-2 rounded-lg overflow-hidden h-40 bg-obsidian-800">
+                <label className="label">Design image *</label>
+
+                {/* Show current/preview image when one exists */}
+                {(imagePreview || form.imageUrl) ? (
+                  <div className="relative rounded-xl overflow-hidden bg-obsidian-800 h-48">
                     <img
-                      src={form.imageUrl}
+                      src={imagePreview || form.imageUrl}
                       alt="Preview"
                       className="h-full w-full object-contain"
-                      onError={(e) => (e.currentTarget.style.display = "none")}
                     />
+                    {/* Replace button overlaid on image */}
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="absolute bottom-2 right-2 flex items-center gap-1.5 rounded-lg bg-obsidian-900/80 backdrop-blur-sm border border-obsidian-700 px-3 py-1.5 text-xs font-medium text-obsidian-200 hover:text-white hover:bg-obsidian-800 transition-all"
+                    >
+                      <ImagePlus className="h-3.5 w-3.5" />
+                      Replace image
+                    </button>
+                    {/* Clear only for newly selected files (editing keeps existing) */}
+                    {imagePreview && (
+                      <button
+                        type="button"
+                        onClick={() => { resetImageState(); }}
+                        className="absolute top-2 right-2 h-7 w-7 rounded-full bg-obsidian-900/80 backdrop-blur-sm flex items-center justify-center text-obsidian-400 hover:text-white hover:bg-obsidian-800 transition-all"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
                   </div>
+                ) : (
+                  /* Dropzone when no image selected */
+                  <label
+                    className="flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed border-obsidian-700 p-8 cursor-pointer transition-all hover:border-ink-600 hover:bg-ink-900/10 group"
+                    onDragOver={(e) => e.preventDefault()}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      handleFileChange(e.dataTransfer.files[0] ?? null);
+                    }}
+                  >
+                    <div className="h-12 w-12 rounded-xl bg-obsidian-800 flex items-center justify-center group-hover:bg-ink-900/40 transition-colors">
+                      <Upload className="h-6 w-6 text-obsidian-400 group-hover:text-ink-400" />
+                    </div>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-obsidian-300 group-hover:text-white">
+                        Click to upload or drag and drop
+                      </p>
+                      <p className="text-xs text-obsidian-500 mt-1">
+                        PNG, JPG, WEBP up to {MAX_FILE_SIZE_MB}MB
+                      </p>
+                    </div>
+                  </label>
                 )}
-                <p className="mt-1 text-xs text-obsidian-500">
-                  Upload your image to Cloudinary, Imgur, or similar and paste the URL here.
-                </p>
+
+                {/* Hidden file input shared by both the dropzone and replace button */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="sr-only"
+                  onChange={(e) => handleFileChange(e.target.files?.[0] ?? null)}
+                />
               </div>
 
               <div>
@@ -247,10 +339,10 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
             <div className="flex gap-3 pt-2">
               <button
                 onClick={saveDesign}
-                disabled={saving}
+                disabled={saving || uploading}
                 className="btn-primary flex-1"
               >
-                {saving ? "Saving…" : editingId ? "Save changes" : "Add design"}
+                {uploading ? "Uploading image…" : saving ? "Saving…" : editingId ? "Save changes" : "Add design"}
               </button>
               <button
                 onClick={() => setShowForm(false)}
