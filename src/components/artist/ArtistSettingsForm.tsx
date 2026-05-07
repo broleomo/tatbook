@@ -55,11 +55,52 @@ export default function ArtistSettingsForm({ artist }: { artist: ArtistData }) {
   const [customFields, setCustomFields] = useState<CustomField[]>(artist.customFields);
 
   const [saving, setSaving] = useState(false);
-  const [status, setStatus] = useState<"idle" | "success" | "error">("idle");
+  const [saveStatus, setSaveStatus] = useState<"idle" | "success" | "error">("idle");
+  const [saveError, setSaveError] = useState("");
+
+  const validate = (): string | null => {
+    if (!form.displayName.trim()) {
+      return "Artist/Studio name is required.";
+    }
+    if (form.websiteUrl.trim()) {
+      try {
+        new URL(form.websiteUrl.trim());
+      } catch {
+        return 'Website URL must start with "https://" — e.g. https://yoursite.com';
+      }
+    }
+    const deposit = parseFloat(form.depositAmount);
+    if (isNaN(deposit) || deposit < 0) {
+      return "Deposit amount must be 0 or more.";
+    }
+    const badPortfolio = portfolioImages.filter((url) => {
+      try { new URL(url); return false; } catch { return true; }
+    });
+    if (badPortfolio.length > 0) {
+      return `${badPortfolio.length} portfolio image URL${badPortfolio.length > 1 ? "s are" : " is"} invalid — each must start with https://.`;
+    }
+    const badSize = sizeOptions.find((s) => !s.label.trim());
+    if (badSize) {
+      return "Each size option must have a label.";
+    }
+    const badField = customFields.find((f) => !f.label.trim());
+    if (badField) {
+      return "Each custom question must have a label.";
+    }
+    return null;
+  };
 
   const save = async () => {
+    const validationError = validate();
+    if (validationError) {
+      setSaveError(validationError);
+      setSaveStatus("error");
+      return;
+    }
+
     setSaving(true);
-    setStatus("idle");
+    setSaveError("");
+    setSaveStatus("idle");
     try {
       const res = await fetch(`/api/artists/${artist.id}`, {
         method: "PATCH",
@@ -78,12 +119,20 @@ export default function ArtistSettingsForm({ artist }: { artist: ArtistData }) {
           customFields,
         }),
       });
-      setStatus(res.ok ? "success" : "error");
+      if (res.ok) {
+        setSaveStatus("success");
+        setSaveError("");
+        setTimeout(() => setSaveStatus("idle"), 3000);
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setSaveError(body.error ?? "Failed to save. Please try again.");
+        setSaveStatus("error");
+      }
     } catch {
-      setStatus("error");
+      setSaveError("Could not reach the server. Please check your connection and try again.");
+      setSaveStatus("error");
     } finally {
       setSaving(false);
-      setTimeout(() => setStatus("idle"), 3000);
     }
   };
 
@@ -438,23 +487,25 @@ export default function ArtistSettingsForm({ artist }: { artist: ArtistData }) {
       </Section>
 
       {/* Save button */}
-      <div className="flex items-center gap-4 pt-4 border-t border-obsidian-800">
-        <button onClick={save} disabled={saving} className="btn-primary gap-2">
-          <Save className="h-4 w-4" />
-          {saving ? "Saving…" : "Save all changes"}
-        </button>
-        {status === "success" && (
-          <div className="flex items-center gap-1.5 text-sm text-green-400">
-            <CheckCircle className="h-4 w-4" />
-            Saved successfully
+      <div className="space-y-3 pt-4 border-t border-obsidian-800">
+        {saveStatus === "error" && saveError && (
+          <div className="flex items-start gap-2.5 rounded-lg bg-red-900/30 border border-red-700/50 px-4 py-3 text-sm text-red-400">
+            <AlertCircle className="h-4 w-4 flex-shrink-0 mt-0.5" />
+            <span>{saveError}</span>
           </div>
         )}
-        {status === "error" && (
-          <div className="flex items-center gap-1.5 text-sm text-red-400">
-            <AlertCircle className="h-4 w-4" />
-            Failed to save. Please try again.
-          </div>
-        )}
+        <div className="flex items-center gap-4">
+          <button onClick={save} disabled={saving} className="btn-primary gap-2">
+            <Save className="h-4 w-4" />
+            {saving ? "Saving…" : "Save all changes"}
+          </button>
+          {saveStatus === "success" && (
+            <div className="flex items-center gap-1.5 text-sm text-green-400">
+              <CheckCircle className="h-4 w-4" />
+              Saved successfully
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
