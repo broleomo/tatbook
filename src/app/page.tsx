@@ -17,7 +17,7 @@ export default async function HomePage() {
       <section className="relative overflow-hidden px-4 py-24 sm:py-40">
         {/* Background image — fill the section, sit behind everything */}
         <Image
-          src="/hero-bg.jpg"
+          src="/martin-engel-_lP2UOoZJKk-unsplash.jpg"
           alt=""
           fill
           priority
