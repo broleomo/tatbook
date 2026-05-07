@@ -96,11 +96,16 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
   const saveDesign = async () => {
     if (!form.name.trim()) { setError("Design name is required."); return; }
 
-    // Must have either an existing URL (editing) or a new file (creating/replacing)
     const hasExistingImage = !!form.imageUrl;
     const hasNewImage = !!imageFile;
     if (!hasExistingImage && !hasNewImage) {
       setError("Please upload an image for this design.");
+      return;
+    }
+
+    const price = form.basePrice ? parseFloat(form.basePrice) : null;
+    if (form.basePrice && (isNaN(price!) || price! <= 0)) {
+      setError("Price must be a positive number.");
       return;
     }
 
@@ -109,15 +114,18 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
     try {
       let finalImageUrl = form.imageUrl;
 
-      // Upload new file if one was selected
       if (hasNewImage && imageFile) {
         setUploading(true);
         const fd = new FormData();
         fd.append("files", imageFile);
         const upRes = await fetch("/api/upload", { method: "POST", body: fd });
         setUploading(false);
-        if (!upRes.ok) throw new Error("Image upload failed");
+        if (!upRes.ok) {
+          const upData = await upRes.json().catch(() => ({}));
+          throw new Error(upData.error ?? "Image upload failed. Please try a different image or check your connection.");
+        }
         const { urls } = await upRes.json();
+        if (!urls?.[0]) throw new Error("Image upload did not return a URL. Please try again.");
         finalImageUrl = urls[0];
       }
 
@@ -126,31 +134,38 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
         description: form.description.trim() || null,
         imageUrl: finalImageUrl,
         available: form.available,
-        basePrice: form.basePrice ? parseFloat(form.basePrice) : null,
+        basePrice: price,
       };
 
+      let res: Response;
       if (editingId) {
-        const res = await fetch(`/api/flash/${editingId}`, {
+        res = await fetch(`/api/flash/${editingId}`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload),
         });
-        if (!res.ok) throw new Error("Failed to update design");
-        const updated = await res.json();
-        setDesigns((prev) => prev.map((d) => (d.id === editingId ? updated : d)));
       } else {
-        const res = await fetch("/api/flash", {
+        res = await fetch("/api/flash", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ ...payload, artistId }),
         });
-        if (!res.ok) throw new Error("Failed to create design");
-        const created = await res.json();
-        setDesigns((prev) => [...prev, created]);
+      }
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error ?? `Failed to ${editingId ? "update" : "save"} design. Please try again.`);
+      }
+
+      const result = await res.json();
+      if (editingId) {
+        setDesigns((prev) => prev.map((d) => (d.id === editingId ? result : d)));
+      } else {
+        setDesigns((prev) => [...prev, result]);
       }
       setShowForm(false);
     } catch (e) {
-      setError("Something went wrong. Please try again.");
+      setError(e instanceof Error ? e.message : "Something went wrong. Please try again.");
     } finally {
       setSaving(false);
       setUploading(false);
@@ -161,8 +176,15 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
     if (!confirm("Delete this flash design? This cannot be undone.")) return;
     setDeleting(id);
     try {
-      await fetch(`/api/flash/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/flash/${id}`, { method: "DELETE" });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        setError(data.error ?? "Failed to delete design. Please try again.");
+        return;
+      }
       setDesigns((prev) => prev.filter((d) => d.id !== id));
+    } catch {
+      setError("Failed to delete design. Please check your connection and try again.");
     } finally {
       setDeleting(null);
     }
