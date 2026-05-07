@@ -4,6 +4,12 @@ import { useRef, useState } from "react";
 import { Plus, Pencil, Trash2, Eye, EyeOff, Upload, X, ImagePlus } from "lucide-react";
 import { formatCurrency } from "@/lib/utils";
 
+const SIZES = [
+  { value: "xs", label: "Extra Small", range: "1–2 inches" },
+  { value: "sm", label: "Small", range: "2–4 inches" },
+  { value: "md", label: "Medium", range: "4–6 inches" },
+];
+
 interface FlashDesign {
   id: string;
   name: string;
@@ -11,6 +17,8 @@ interface FlashDesign {
   imageUrl: string;
   available: boolean;
   basePrice?: number | null;
+  maxPrice?: number | null;
+  sizes: string[];
   sortOrder: number;
 }
 
@@ -24,7 +32,9 @@ interface DesignForm {
   description: string;
   imageUrl: string;
   available: boolean;
-  basePrice: string;
+  minPrice: string;
+  maxPrice: string;
+  sizes: string[];
 }
 
 const EMPTY_FORM: DesignForm = {
@@ -32,10 +42,19 @@ const EMPTY_FORM: DesignForm = {
   description: "",
   imageUrl: "",
   available: true,
-  basePrice: "",
+  minPrice: "",
+  maxPrice: "",
+  sizes: [],
 };
 
 const MAX_FILE_SIZE_MB = 10;
+
+function formatPriceRange(min?: number | null, max?: number | null) {
+  if (min && max) return `${formatCurrency(min)} – ${formatCurrency(max)}`;
+  if (min) return `From ${formatCurrency(min)}`;
+  if (max) return `Up to ${formatCurrency(max)}`;
+  return null;
+}
 
 export default function FlashDesignManager({ designs: initial, artistId }: Props) {
   const [designs, setDesigns] = useState(initial);
@@ -71,11 +90,22 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
       description: design.description ?? "",
       imageUrl: design.imageUrl,
       available: design.available,
-      basePrice: design.basePrice?.toString() ?? "",
+      minPrice: design.basePrice?.toString() ?? "",
+      maxPrice: design.maxPrice?.toString() ?? "",
+      sizes: design.sizes ?? [],
     });
     resetImageState();
     setError("");
     setShowForm(true);
+  };
+
+  const toggleSize = (value: string) => {
+    setForm((prev) => ({
+      ...prev,
+      sizes: prev.sizes.includes(value)
+        ? prev.sizes.filter((s) => s !== value)
+        : [...prev.sizes, value],
+    }));
   };
 
   const handleFileChange = (file: File | null) => {
@@ -103,9 +133,18 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
       return;
     }
 
-    const price = form.basePrice ? parseFloat(form.basePrice) : null;
-    if (form.basePrice && (isNaN(price!) || price! <= 0)) {
-      setError("Price must be a positive number.");
+    const minPrice = form.minPrice ? parseFloat(form.minPrice) : null;
+    const maxPrice = form.maxPrice ? parseFloat(form.maxPrice) : null;
+    if (form.minPrice && (isNaN(minPrice!) || minPrice! <= 0)) {
+      setError("Starting price must be a positive number.");
+      return;
+    }
+    if (form.maxPrice && (isNaN(maxPrice!) || maxPrice! <= 0)) {
+      setError("Maximum price must be a positive number.");
+      return;
+    }
+    if (minPrice && maxPrice && maxPrice < minPrice) {
+      setError("Maximum price must be greater than or equal to the starting price.");
       return;
     }
 
@@ -134,7 +173,9 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
         description: form.description.trim() || null,
         imageUrl: finalImageUrl,
         available: form.available,
-        basePrice: price,
+        basePrice: minPrice,
+        maxPrice: maxPrice,
+        sizes: form.sizes,
       };
 
       let res: Response;
@@ -215,11 +256,18 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
         </button>
       </div>
 
+      {error && !showForm && (
+        <div className="rounded-lg bg-red-900/30 border border-red-700/50 px-4 py-3 text-sm text-red-400">
+          {error}
+        </div>
+      )}
+
       {/* Add/Edit form modal */}
       {showForm && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
-          <div className="card w-full max-w-lg p-6 space-y-5">
-            <div className="flex items-center justify-between">
+          <div className="card w-full max-w-lg max-h-[90vh] flex flex-col">
+            {/* Fixed header */}
+            <div className="flex items-center justify-between p-6 pb-4 border-b border-obsidian-800">
               <h2 className="text-lg font-bold text-white">
                 {editingId ? "Edit design" : "Add flash design"}
               </h2>
@@ -231,13 +279,15 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
               </button>
             </div>
 
-            {error && (
-              <div className="rounded-lg bg-red-900/30 border border-red-700/50 px-4 py-3 text-sm text-red-400">
-                {error}
-              </div>
-            )}
+            {/* Scrollable body */}
+            <div className="overflow-y-auto flex-1 p-6 space-y-5">
+              {error && (
+                <div className="rounded-lg bg-red-900/30 border border-red-700/50 px-4 py-3 text-sm text-red-400">
+                  {error}
+                </div>
+              )}
 
-            <div className="space-y-4">
+              {/* Design name */}
               <div>
                 <label className="label">Design name *</label>
                 <input
@@ -249,10 +299,9 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
                 />
               </div>
 
+              {/* Image upload */}
               <div>
                 <label className="label">Design image *</label>
-
-                {/* Show current/preview image when one exists */}
                 {(imagePreview || form.imageUrl) ? (
                   <div className="relative rounded-xl overflow-hidden bg-obsidian-800 h-48">
                     <img
@@ -260,7 +309,6 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
                       alt="Preview"
                       className="h-full w-full object-contain"
                     />
-                    {/* Replace button overlaid on image */}
                     <button
                       type="button"
                       onClick={() => fileInputRef.current?.click()}
@@ -269,11 +317,10 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
                       <ImagePlus className="h-3.5 w-3.5" />
                       Replace image
                     </button>
-                    {/* Clear only for newly selected files (editing keeps existing) */}
                     {imagePreview && (
                       <button
                         type="button"
-                        onClick={() => { resetImageState(); }}
+                        onClick={resetImageState}
                         className="absolute top-2 right-2 h-7 w-7 rounded-full bg-obsidian-900/80 backdrop-blur-sm flex items-center justify-center text-obsidian-400 hover:text-white hover:bg-obsidian-800 transition-all"
                       >
                         <X className="h-3.5 w-3.5" />
@@ -281,7 +328,6 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
                     )}
                   </div>
                 ) : (
-                  /* Dropzone when no image selected */
                   <div
                     role="button"
                     tabIndex={0}
@@ -307,8 +353,6 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
                     </div>
                   </div>
                 )}
-
-                {/* Hidden file input shared by both the dropzone and replace button */}
                 <input
                   ref={fileInputRef}
                   type="file"
@@ -318,6 +362,7 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
                 />
               </div>
 
+              {/* Description */}
               <div>
                 <label className="label">Description</label>
                 <textarea
@@ -329,40 +374,91 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="label">Starting price (optional)</label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-obsidian-500 text-sm">$</span>
-                    <input
-                      type="number"
-                      min="0"
-                      step="0.01"
-                      className="input-field pl-7"
-                      placeholder="0.00"
-                      value={form.basePrice}
-                      onChange={(e) => setForm({ ...form, basePrice: e.target.value })}
-                    />
+              {/* Price range */}
+              <div>
+                <label className="label">Price range (optional)</label>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="text-xs text-obsidian-500 mb-1 block">Starting from</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-obsidian-500 text-sm">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="input-field pl-7"
+                        placeholder="0.00"
+                        value={form.minPrice}
+                        onChange={(e) => setForm({ ...form, minPrice: e.target.value })}
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-xs text-obsidian-500 mb-1 block">Up to</label>
+                    <div className="relative">
+                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-obsidian-500 text-sm">$</span>
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        className="input-field pl-7"
+                        placeholder="0.00"
+                        value={form.maxPrice}
+                        onChange={(e) => setForm({ ...form, maxPrice: e.target.value })}
+                      />
+                    </div>
                   </div>
                 </div>
-                <div>
-                  <label className="label">Availability</label>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, available: !form.available })}
-                    className={`w-full rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
-                      form.available
-                        ? "border-green-700/50 bg-green-900/20 text-green-400"
-                        : "border-obsidian-700 bg-obsidian-900 text-obsidian-400"
-                    }`}
-                  >
-                    {form.available ? "Available" : "Unavailable"}
-                  </button>
+              </div>
+
+              {/* Available sizes */}
+              <div>
+                <label className="label">Available sizes (optional)</label>
+                <div className="grid grid-cols-3 gap-2">
+                  {SIZES.map((size) => {
+                    const selected = form.sizes.includes(size.value);
+                    return (
+                      <button
+                        key={size.value}
+                        type="button"
+                        onClick={() => toggleSize(size.value)}
+                        className={`flex flex-col items-center gap-0.5 rounded-xl border px-3 py-3 text-center transition-all ${
+                          selected
+                            ? "border-ink-500 bg-ink-900/30 text-white"
+                            : "border-obsidian-700 bg-obsidian-900 text-obsidian-400 hover:border-obsidian-600 hover:text-obsidian-200"
+                        }`}
+                      >
+                        <span className="text-xs font-semibold uppercase tracking-wide">
+                          {size.label}
+                        </span>
+                        <span className={`text-xs ${selected ? "text-ink-300" : "text-obsidian-500"}`}>
+                          {size.range}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+
+              {/* Availability */}
+              <div>
+                <label className="label">Availability</label>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, available: !form.available })}
+                  className={`w-full rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
+                    form.available
+                      ? "border-green-700/50 bg-green-900/20 text-green-400"
+                      : "border-obsidian-700 bg-obsidian-900 text-obsidian-400"
+                  }`}
+                >
+                  {form.available ? "Available for booking" : "Unavailable"}
+                </button>
               </div>
             </div>
 
-            <div className="flex gap-3 pt-2">
+            {/* Fixed footer */}
+            <div className="flex gap-3 p-6 pt-4 border-t border-obsidian-800">
               <button
                 onClick={saveDesign}
                 disabled={saving || uploading}
@@ -370,10 +466,7 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
               >
                 {uploading ? "Uploading image…" : saving ? "Saving…" : editingId ? "Save changes" : "Add design"}
               </button>
-              <button
-                onClick={() => setShowForm(false)}
-                className="btn-secondary"
-              >
+              <button onClick={() => setShowForm(false)} className="btn-secondary">
                 Cancel
               </button>
             </div>
@@ -399,60 +492,76 @@ export default function FlashDesignManager({ designs: initial, artistId }: Props
         </div>
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {designs.map((design) => (
-            <div
-              key={design.id}
-              className={`card overflow-hidden ${!design.available ? "opacity-60" : ""}`}
-            >
-              <div className="aspect-square bg-obsidian-800 overflow-hidden relative">
-                <img
-                  src={design.imageUrl}
-                  alt={design.name}
-                  className="h-full w-full object-cover"
-                />
-                {!design.available && (
-                  <div className="absolute inset-0 bg-obsidian-950/60 flex items-center justify-center">
-                    <span className="text-xs font-semibold text-obsidian-300 bg-obsidian-900/80 px-2 py-1 rounded">
-                      Unavailable
-                    </span>
-                  </div>
-                )}
-              </div>
-              <div className="p-3 space-y-2">
-                <div>
-                  <p className="font-semibold text-white text-sm">{design.name}</p>
-                  {design.basePrice && (
-                    <p className="text-xs text-ink-400">
-                      From {formatCurrency(design.basePrice)}
-                    </p>
+          {designs.map((design) => {
+            const priceRange = formatPriceRange(design.basePrice, design.maxPrice);
+            return (
+              <div
+                key={design.id}
+                className={`card overflow-hidden ${!design.available ? "opacity-60" : ""}`}
+              >
+                <div className="aspect-square bg-obsidian-800 overflow-hidden relative">
+                  <img
+                    src={design.imageUrl}
+                    alt={design.name}
+                    className="h-full w-full object-cover"
+                  />
+                  {!design.available && (
+                    <div className="absolute inset-0 bg-obsidian-950/60 flex items-center justify-center">
+                      <span className="text-xs font-semibold text-obsidian-300 bg-obsidian-900/80 px-2 py-1 rounded">
+                        Unavailable
+                      </span>
+                    </div>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <button
-                    onClick={() => openEdit(design)}
-                    className="flex-1 btn-ghost text-xs py-1.5 px-2 gap-1 justify-center"
-                  >
-                    <Pencil className="h-3 w-3" />
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => toggleAvailable(design)}
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-obsidian-400 hover:text-white hover:bg-obsidian-800 transition-all"
-                    title={design.available ? "Hide design" : "Show design"}
-                  >
-                    {design.available ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
-                  </button>
-                  <button
-                    onClick={() => deleteDesign(design.id)}
-                    disabled={deleting === design.id}
-                    className="h-8 w-8 rounded-lg flex items-center justify-center text-obsidian-400 hover:text-red-400 hover:bg-red-900/20 transition-all"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                <div className="p-3 space-y-2">
+                  <div>
+                    <p className="font-semibold text-white text-sm">{design.name}</p>
+                    {priceRange && (
+                      <p className="text-xs text-ink-400">{priceRange}</p>
+                    )}
+                    {design.sizes.length > 0 && (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {design.sizes.map((s) => {
+                          const sizeLabel = SIZES.find((sz) => sz.value === s);
+                          return (
+                            <span
+                              key={s}
+                              className="text-xs bg-obsidian-800 text-obsidian-300 px-1.5 py-0.5 rounded"
+                            >
+                              {sizeLabel?.label ?? s}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      onClick={() => openEdit(design)}
+                      className="flex-1 btn-ghost text-xs py-1.5 px-2 gap-1 justify-center"
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => toggleAvailable(design)}
+                      className="h-8 w-8 rounded-lg flex items-center justify-center text-obsidian-400 hover:text-white hover:bg-obsidian-800 transition-all"
+                      title={design.available ? "Hide design" : "Show design"}
+                    >
+                      {design.available ? <Eye className="h-3.5 w-3.5" /> : <EyeOff className="h-3.5 w-3.5" />}
+                    </button>
+                    <button
+                      onClick={() => deleteDesign(design.id)}
+                      disabled={deleting === design.id}
+                      className="h-8 w-8 rounded-lg flex items-center justify-center text-obsidian-400 hover:text-red-400 hover:bg-red-900/20 transition-all"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
+                  </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       )}
     </div>

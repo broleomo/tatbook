@@ -81,6 +81,8 @@ model FlashDesign {
   imageUrl    String
   available   Boolean @default(true)
   basePrice   Float?
+  maxPrice    Float?
+  sizes       String  @default("[]")
   sortOrder   Int     @default(0)
 
   bookings  Booking[]

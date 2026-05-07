@@ -9,7 +9,9 @@ const createFlashSchema = z.object({
   description: z.string().nullable().optional(),
   imageUrl: z.string().url("A valid image URL is required"),
   available: z.boolean().default(true),
-  basePrice: z.number().positive("Price must be a positive number").nullable().optional(),
+  basePrice: z.number().positive("Starting price must be a positive number").nullable().optional(),
+  maxPrice: z.number().positive("Maximum price must be a positive number").nullable().optional(),
+  sizes: z.array(z.string()).default([]),
 });
 
 export async function POST(req: NextRequest) {
@@ -48,11 +50,13 @@ export async function POST(req: NextRequest) {
         imageUrl: data.imageUrl,
         available: data.available,
         basePrice: data.basePrice ?? null,
+        maxPrice: data.maxPrice ?? null,
+        sizes: JSON.stringify(data.sizes ?? []),
         sortOrder: count,
       },
     });
 
-    return NextResponse.json(design, { status: 201 });
+    return NextResponse.json({ ...design, sizes: JSON.parse(design.sizes) }, { status: 201 });
   } catch (err) {
     console.error("POST /api/flash error:", err);
     if (err instanceof ZodError) {

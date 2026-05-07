@@ -8,7 +8,9 @@ const patchSchema = z.object({
   description: z.string().nullable().optional(),
   imageUrl: z.string().url("A valid image URL is required").optional(),
   available: z.boolean().optional(),
-  basePrice: z.number().positive("Price must be a positive number").nullable().optional(),
+  basePrice: z.number().positive("Starting price must be a positive number").nullable().optional(),
+  maxPrice: z.number().positive("Maximum price must be a positive number").nullable().optional(),
+  sizes: z.array(z.string()).optional(),
   sortOrder: z.number().int().optional(),
 });
 
@@ -42,8 +44,12 @@ export async function PATCH(
       return NextResponse.json({ error: firstError?.message ?? "Invalid data" }, { status: 400 });
     }
 
-    const updated = await prisma.flashDesign.update({ where: { id }, data: result.data });
-    return NextResponse.json(updated);
+    const { sizes, ...rest } = result.data;
+    const updated = await prisma.flashDesign.update({
+      where: { id },
+      data: { ...rest, ...(sizes !== undefined ? { sizes: JSON.stringify(sizes) } : {}) },
+    });
+    return NextResponse.json({ ...updated, sizes: JSON.parse(updated.sizes) });
   } catch (err) {
     console.error("PATCH /api/flash/[id] error:", err);
     if (err instanceof ZodError) {

@@ -26,6 +26,8 @@ export default async function FlashPage() {
     imageUrl: d.imageUrl,
     available: d.available,
     basePrice: d.basePrice,
+    maxPrice: d.maxPrice,
+    sizes: JSON.parse(d.sizes ?? "[]") as string[],
     sortOrder: d.sortOrder,
   }));
 
