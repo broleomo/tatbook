@@ -28,7 +28,14 @@ export async function PATCH(
   if (!booking) return NextResponse.json({ error: "Booking not found" }, { status: 404 });
 
   const body = await req.json();
-  const data = patchSchema.parse(body);
+  const result = patchSchema.safeParse(body);
+  if (!result.success) {
+    return NextResponse.json(
+      { error: result.error.errors[0]?.message ?? "Invalid data" },
+      { status: 400 }
+    );
+  }
+  const data = result.data;
 
   const updated = await prisma.booking.update({
     where: { id },

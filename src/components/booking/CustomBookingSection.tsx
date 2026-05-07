@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Upload, X, Image as ImageIcon, AlertCircle } from "lucide-react";
 
 interface Props {
@@ -25,6 +25,14 @@ export default function CustomBookingSection({ files, onChange }: Props) {
     },
     [files, onChange]
   );
+
+  const [fileUrls, setFileUrls] = useState<string[]>([]);
+
+  useEffect(() => {
+    const urls = files.map((f) => URL.createObjectURL(f));
+    setFileUrls(urls);
+    return () => urls.forEach((url) => URL.revokeObjectURL(url));
+  }, [files]);
 
   const removeFile = (index: number) => {
     onChange(files.filter((_, i) => i !== index));
@@ -73,7 +81,7 @@ export default function CustomBookingSection({ files, onChange }: Props) {
             {files.map((file, i) => (
               <div key={i} className="relative group aspect-square rounded-xl overflow-hidden bg-obsidian-800">
                 <img
-                  src={URL.createObjectURL(file)}
+                  src={fileUrls[i]}
                   alt={`Reference ${i + 1}`}
                   className="h-full w-full object-cover"
                 />

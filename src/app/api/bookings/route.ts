@@ -52,6 +52,19 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Flash design must be selected" }, { status: 400 });
     }
 
+    if (data.bookingType === "FLASH" && data.flashDesignId) {
+      const flash = await prisma.flashDesign.findUnique({
+        where: { id: data.flashDesignId },
+        select: { available: true },
+      });
+      if (!flash) {
+        return NextResponse.json({ error: "The selected flash design no longer exists." }, { status: 404 });
+      }
+      if (!flash.available) {
+        return NextResponse.json({ error: "This flash design is no longer available for booking. Please choose another." }, { status: 400 });
+      }
+    }
+
     const booking = await prisma.booking.create({
       data: {
         artistId: data.artistId,

@@ -26,14 +26,20 @@ export async function POST(req: NextRequest) {
     const bookingId = session.metadata?.bookingId;
 
     if (bookingId) {
-      await prisma.booking.update({
-        where: { id: bookingId },
-        data: {
-          depositPaid: true,
-          stripePaymentId: session.payment_intent as string ?? null,
-          status: "DEPOSIT_PAID",
-        },
-      });
+      try {
+        await prisma.booking.update({
+          where: { id: bookingId },
+          data: {
+            depositPaid: true,
+            stripePaymentId: session.payment_intent as string ?? null,
+            status: "DEPOSIT_PAID",
+          },
+        });
+      } catch (err) {
+        // Log but return 200 — Stripe retries on non-2xx, so a missing booking
+        // would cause infinite retries. Log for manual review instead.
+        console.error(`Failed to update booking ${bookingId} on checkout.session.completed:`, err);
+      }
     }
   }
 
@@ -42,10 +48,14 @@ export async function POST(req: NextRequest) {
     const bookingId = session.metadata?.bookingId;
 
     if (bookingId) {
-      await prisma.booking.update({
-        where: { id: bookingId },
-        data: { status: "CANCELLED" },
-      });
+      try {
+        await prisma.booking.update({
+          where: { id: bookingId },
+          data: { status: "CANCELLED" },
+        });
+      } catch (err) {
+        console.error(`Failed to cancel booking ${bookingId} on checkout.session.expired:`, err);
+      }
     }
   }
 

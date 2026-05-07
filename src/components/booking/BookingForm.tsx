@@ -78,7 +78,7 @@ export default function BookingForm({ artist, prefillEmail = "", prefillName = "
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState("");
 
-  const { register, handleSubmit, formState: { errors } } = useForm<ClientForm>({
+  const { register, handleSubmit, trigger, formState: { errors } } = useForm<ClientForm>({
     resolver: zodResolver(clientSchema),
     defaultValues: { clientName: prefillName, clientEmail: prefillEmail },
   });
@@ -89,6 +89,9 @@ export default function BookingForm({ artist, prefillEmail = "", prefillName = "
   const canProceedFromDetails = () => {
     if (!selectedSize || !bodyPlacement) return false;
     if (bookingType === "FLASH" && !selectedFlashId) return false;
+    for (const field of artist.customFields) {
+      if (field.required && !customFieldValues[field.id]?.trim()) return false;
+    }
     return true;
   };
 
@@ -394,7 +397,10 @@ export default function BookingForm({ artist, prefillEmail = "", prefillName = "
               Back
             </button>
             <button
-              onClick={() => setStep("review")}
+              onClick={async () => {
+                const valid = await trigger();
+                if (valid) setStep("review");
+              }}
               className="btn-primary flex-1 gap-2"
             >
               Review booking
